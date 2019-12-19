@@ -6,6 +6,200 @@ framework:
                 type: method
             supports:
                 - App\Entity\Article
+            initial_marking: draft
+            places:
+                - draft
+                - submitted
+                - waiting for payement
+                - waiting for moderation
+                - online
+                - offline
+            transitions:
+                submit:
+                    from: [draft, offline]
+                    to:   [submitted, waiting for payement]
+                pay:
+                    from: waiting for payement
+                    to:   submitted
+                pre_validate:
+                    from: submitted
+                    to:   [online, waiting for moderation]
+                expire:
+                    from: online
+                    to: offline
+                approve:
+                    from: waiting for moderation
+                    to:   online
+                deny:
+                    from: waiting for moderation
+                    to:   offline
+                update:
+                    from: online
+                    to: waiting for moderation
+                request moderation:
+                    from: submitted
+                    to: waiting for moderation
+            audit_trail: true
+
+        task:
+            type: state_machine
+            supports:
+                - App\Entity\Task
+            marking_store:
+                type: method
+            places:
+                - new
+                - backlogged
+                - processing
+                - failed
+                - completed
+            transitions:
+                start_process:
+                    from: new
+                    to: processing
+                retry:
+                    from: backlogged
+                    to: processing
+                temp_error:
+                    from: processing
+                    to: backlogged
+                permanent_error:
+                    from: processing
+                    to: failed
+                complete_without_error:
+                    from: processing
+                    to: completed
+
+        straight:
+            type: workflow
+            supports:
+                - stdClass # Just a hack
+            places:
+                - a
+                - b
+                - c
+                - d
+            transitions:
+                t1:
+                    from: a
+                    to: b
+                t2:
+                    from: b
+                    to: c
+                t3:
+                    from: c
+                    to: d
+
+        round_trip:
+            type: workflow
+            supports:
+                - stdClass # Just a hack
+            places:
+                - a
+                - b
+                - c
+            transitions:
+                t1:
+                    from: a
+                    to: b
+                t2:
+                    from: b
+                    to: c
+                t3:
+                    from: c
+                    to: a
+
+        or:
+            type: workflow
+            supports:
+                - stdClass # Just a hack
+            places:
+                - a
+                - b
+                - c
+                - d
+            transitions:
+                t1:
+                    from: a
+                    to: b
+                t2:
+                    from: a
+                    to: c
+                t3:
+                    from: b
+                    to: d
+                t4:
+                    from: c
+                    to: d
+
+        and:
+            type: workflow
+            supports:
+                - stdClass # Just a hack
+            places:
+                - a
+                - b
+                - c
+                - d
+                - e
+                - f
+            transitions:
+                t1:
+                    from: a
+                    to: [b, c]
+                t2:
+                    from: b
+                    to: d
+                t3:
+                    from: c
+                    to: e
+                t4:
+                    from: [d, e]
+                    to: f
+
+        wtf:
+            type: workflow
+            supports: stdClass # Just a hack
+            places: [ a, b, c, d, e, f, g, h, i, j, k ]
+            transitions:
+                t1:
+                    from: a
+                    to: b
+                t2:
+                    from: b
+                    to: c
+                t3:
+                    from: c
+                    to: d
+                t4:
+                    from: b
+                    to: e
+                t5:
+                    from: b
+                    to: f
+                t6:
+                    from: [c, d]
+                    to: [f, g]
+                t7:
+                    from: e
+                    to: h
+                t8:
+                    from: [e, g, i]
+                    to: h
+                t9:
+                    from: [f, g]
+                    to: [i, j]
+                t10:
+                    from: h
+                    to: k
+framework:
+    workflows:
+        article:
+            type: workflow
+            marking_store:
+                type: method
+            supports:
+                - App\Entity\Article
             places:
                 draft:
                     metadata:
